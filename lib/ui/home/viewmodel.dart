@@ -4,24 +4,14 @@ import 'package:capy_music/data/repository/repository.dart';
 
 import '../../data/model/song.dart';
 
-/// ViewModel chịu trách nhiệm xử lý logic nghiệp vụ cho màn hình Home.
-/// Nó kết nối giữa Repository và Giao diện (UI).
+/// ViewModel cho CapyMusic để quản lý luồng dữ liệu bài hát.
 class CapyMusicViewModel {
-  /// StreamController để quản lý dòng dữ liệu của danh sách bài hát.
-  /// UI sẽ lắng nghe (listen) stream này để cập nhật giao diện khi có dữ liệu mới.
+  /// StreamController để truyền danh sách bài hát đến giao diện.
   StreamController<List<Song>> songStream = StreamController();
 
-  /// Phương thức thực hiện việc tải danh sách bài hát từ Repository.
+  /// Tải danh sách bài hát từ repository và đẩy vào stream.
   void loadSongs() {
-    // Khởi tạo repository để truy cập dữ liệu.
     final repository = DefaultRepository();
-    
-    // Gọi phương thức loadData từ repository.
-    // Khi dữ liệu được tải xong (then), chúng ta đẩy kết quả vào stream.
-    repository.loadData().then((value) {
-      if (value != null) {
-        songStream.add(value);
-      }
-    });
+    repository.loadData().then((value) => songStream.add(value!));
   }
 }

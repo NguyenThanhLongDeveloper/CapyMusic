@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import '../../data/model/song.dart';
 
 /// Widget chính của ứng dụng Capy Music.
-/// Thiết lập MaterialApp, theme và trang chủ đầu tiên.
+/// Thiết lập MaterialApp, cấu hình theme và trang khởi đầu.
 class CapyMusic extends StatelessWidget {
   const CapyMusic({super.key});
 
@@ -16,18 +16,17 @@ class CapyMusic extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Capy Music',
-      debugShowCheckedModeBanner: false, // Tắt biểu tượng "Debug" ở góc màn hình.
       theme: ThemeData(
-        // Thiết lập tông màu chính dựa trên màu tím đậm.
+        // Thiết lập tông màu chính dựa trên màu tím đậm (deepPurple).
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true, // Sử dụng Material Design 3 mới nhất.
+        useMaterial3: true, // Sử dụng Material Design 3.
       ),
       home: const MusicHomePage(),
     );
   }
 }
 
-/// Trang chủ của ứng dụng, chứa thanh điều hướng phía dưới (Tab bar).
+/// Trang chủ của ứng dụng, sử dụng cấu trúc Tab bar để điều hướng.
 class MusicHomePage extends StatefulWidget {
   const MusicHomePage({super.key});
 
@@ -36,7 +35,7 @@ class MusicHomePage extends StatefulWidget {
 }
 
 class _MusicHomePageState extends State<MusicHomePage> {
-  // Danh sách các tab (màn hình) sẽ hiển thị tương ứng với từng icon.
+  // Danh sách các màn hình (Tab) tương ứng với từng mục điều hướng.
   final List<Widget> _tabs = [
     const HomeTab(),
     const DiscoveryTab(),
@@ -46,21 +45,27 @@ class _MusicHomePageState extends State<MusicHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Sử dụng giao diện kiểu Cupertino (iOS) cho trang chủ.
+    // Kết hợp Cupertino Scaffold để tạo giao diện kiểu iOS cho thanh điều hướng.
     return CupertinoPageScaffold(
       navigationBar: const CupertinoNavigationBar(middle: Text('Capy Music')),
       child: CupertinoTabScaffold(
-        // Thanh điều hướng dưới cùng.
+        // Thanh điều hướng (Bottom Navigation Bar) ở dưới cùng.
         tabBar: CupertinoTabBar(
           backgroundColor: Theme.of(context).colorScheme.onInverseSurface,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.album), label: 'Discovery'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.album),
+              label: 'Discovery',
+            ),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
           ],
         ),
-        // Hàm xây dựng nội dung cho từng tab dựa trên chỉ mục (index).
+        // Hàm xây dựng nội dung cho tab hiện tại dựa trên index.
         tabBuilder: (BuildContext context, int index) {
           return _tabs[index];
         },
@@ -69,7 +74,7 @@ class _MusicHomePageState extends State<MusicHomePage> {
   }
 }
 
-/// Widget bọc ngoài cho tab "Home" để có thể chứa nội dung động.
+/// Widget bọc (wrapper) cho tab Trang chủ.
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
 
@@ -79,7 +84,7 @@ class HomeTab extends StatelessWidget {
   }
 }
 
-/// Màn hình hiển thị danh sách bài hát trong tab Home.
+/// Màn hình hiển thị danh sách bài hát, xử lý việc tải và hiển thị dữ liệu.
 class HomeTabPage extends StatefulWidget {
   const HomeTabPage({super.key});
 
@@ -88,25 +93,29 @@ class HomeTabPage extends StatefulWidget {
 }
 
 class _HomeTabPageState extends State<HomeTabPage> {
-  List<Song> songs = []; // Danh sách các bài hát sẽ hiển thị.
-  late CapyMusicViewModel _viewModel; // ViewModel để xử lý logic lấy dữ liệu.
+  List<Song> songs = []; // Lưu trữ danh sách bài hát nhận được từ ViewModel.
+  late CapyMusicViewModel _viewModel; // Khai báo ViewModel.
 
   @override
   void initState() {
+    _viewModel = CapyMusicViewModel(); // Khởi tạo ViewModel.
+    _viewModel.loadSongs(); // Gọi hàm tải danh sách bài hát.
+    observeData(); // Đăng ký lắng nghe dữ liệu mới.
     super.initState();
-    _viewModel = CapyMusicViewModel();
-    _viewModel.loadSongs(); // Yêu cầu ViewModel tải danh sách bài hát.
-    observeData(); // Lắng nghe sự thay đổi dữ liệu từ ViewModel.
+  }
+
+  @override
+  void dispose() {
+    _viewModel.songStream.close(); // Đóng stream để tránh rò rỉ bộ nhớ.
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: getBody(),
-    );
+    return Scaffold(body: getBody());
   }
 
-  /// Quyết định hiển thị Loading hoặc Danh sách bài hát dựa trên trạng thái dữ liệu.
+  /// Hàm trả về widget nội dung chính (Loading hoặc ListView).
   Widget getBody() {
     bool showLoading = songs.isEmpty;
     if (showLoading) {
@@ -116,24 +125,22 @@ class _HomeTabPageState extends State<HomeTabPage> {
     }
   }
 
-  /// Widget hiển thị vòng xoay tải dữ liệu.
+  /// Hiển thị biểu tượng đang tải dữ liệu.
   Widget getProgressBar() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 
-  /// Xây dựng danh sách bài hát dạng ListView.
+  /// Xây dựng ListView để hiển thị danh sách bài hát có đường kẻ phân cách.
   ListView getListView() {
     return ListView.separated(
       itemBuilder: (context, position) {
-        return getRow(position); // Xây dựng từng hàng của danh sách.
+        return getRow(position); // Trả về giao diện cho từng hàng.
       },
       separatorBuilder: (context, index) {
-        // Đường kẻ phân cách giữa các bài hát.
+        // Đường kẻ ngăn cách giữa các bài hát.
         return const Divider(
           color: Colors.grey,
-          thickness: 0.5,
+          thickness: 1,
           indent: 24,
           endIndent: 24,
         );
@@ -143,21 +150,56 @@ class _HomeTabPageState extends State<HomeTabPage> {
     );
   }
 
-  /// Xây dựng giao diện cho một dòng bài hát (tạm thời hiển thị text).
+  /// Tạo widget cho từng dòng bài hát bằng cách gọi _songItemSection.
   Widget getRow(int index) {
-    return ListTile(
-      title: Text(songs[index].title),
-      subtitle: Text(songs[index].artist),
-      leading: const Icon(Icons.music_note),
-    );
+    return _songItemSection(parent: this, song: songs[index],);
   }
 
-  /// Lắng nghe Stream từ ViewModel để cập nhật UI khi có bài hát mới.
+  /// Lắng nghe stream từ ViewModel và cập nhật UI khi có dữ liệu mới.
   void observeData() {
     _viewModel.songStream.stream.listen((songList) {
       setState(() {
         songs.addAll(songList);
       });
     });
+  }
+}
+
+/// Widget hiển thị thông tin chi tiết của một bài hát (Item trong danh sách).
+class _songItemSection extends StatelessWidget {
+  const _songItemSection({required this.parent, required this.song});
+
+  final _HomeTabPageState parent;
+  final Song song;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.only(
+        left: 24,
+        right: 8
+      ),
+      // Ảnh minh họa bài hát được bo góc.
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: FadeInImage.assetNetwork(
+          placeholder: 'assets/img.png', // Ảnh hiển thị khi đang tải.
+          image: song.image, // URL ảnh bài hát.
+          width: 48,
+          height: 48,
+          // Xử lý lỗi nếu không tải được ảnh từ mạng.
+          imageErrorBuilder: (context, error, stackTrace) {
+            return Image.asset('assets/img.png', width: 48, height: 48);
+          },
+        ),
+      ),
+      title: Text(song.title), // Tiêu đề bài hát.
+      subtitle: Text(song.artist), // Tên nghệ sĩ.
+      // Nút chức năng thêm (ba chấm).
+      trailing: IconButton(
+        icon: const Icon(Icons.more_horiz), 
+        onPressed: () {},
+      ),
+    );
   }
 }
