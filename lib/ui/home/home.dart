@@ -94,8 +94,10 @@ class HomeTabPage extends StatefulWidget {
 }
 
 class _HomeTabPageState extends State<HomeTabPage> {
-  List<Song> songs = []; // Danh sách các bài hát được lưu trữ tại đây sau khi tải về.
-  late CapyMusicViewModel _viewModel; // ViewModel quản lý việc lấy dữ liệu bài hát.
+  List<Song> songs =
+      []; // Danh sách các bài hát được lưu trữ tại đây sau khi tải về.
+  late CapyMusicViewModel
+  _viewModel; // ViewModel quản lý việc lấy dữ liệu bài hát.
 
   @override
   void initState() {
@@ -107,7 +109,8 @@ class _HomeTabPageState extends State<HomeTabPage> {
 
   @override
   void dispose() {
-    _viewModel.songStream.close(); // Đảm bảo đóng StreamController khi widget bị hủy để tránh rò rỉ bộ nhớ.
+    _viewModel.songStream
+        .close(); // Đảm bảo đóng StreamController khi widget bị hủy để tránh rò rỉ bộ nhớ.
     super.dispose();
   }
 
@@ -154,7 +157,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
 
   /// Tạo một widget đại diện cho một hàng bài hát.
   Widget getRow(int index) {
-    return _SongItemSection(parent: this, song: songs[index],);
+    return _SongItemSection(parent: this, song: songs[index]);
   }
 
   /// Đăng ký lắng nghe dữ liệu từ stream của ViewModel và cập nhật giao diện khi có danh sách bài hát mới.
@@ -166,20 +169,47 @@ class _HomeTabPageState extends State<HomeTabPage> {
     });
   }
 
-  /// Hàm dùng để hiển thị một Bottom Sheet khi người dùng nhấn vào nút chức năng.
+  /// Hàm dùng để hiển thị một Bottom Sheet (bảng điều khiển từ dưới lên) 
+  /// khi người dùng nhấn vào nút chức năng "thêm" trên mỗi bài hát.
   void showBottomSheet() {
-    // TODO: Triển khai giao diện Bottom Sheet tại đây.
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return ClipRRect(
+          // Bo tròn góc trên của Bottom Sheet để tạo cảm giác mềm mại.
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          child: Container(
+            height: 400, // Chiều cao cố định của Bottom Sheet.
+            color: Colors.grey, // Màu nền của Bottom Sheet.
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Text('BottomSheet'), // Tiêu đề hiển thị bên trong.
+                  ElevatedButton(
+                    // Nút bấm để đóng Bottom Sheet và quay lại màn hình chính.
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('close bottomsheet'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   /// Chuyển hướng người dùng sang màn hình đang phát nhạc (Playing).
   void navigate(Song song) {
-    Navigator.push(context,
-        CupertinoPageRoute(builder: (context){
-          return Playing(
-            songs : songs,
-            playingSong: song
-          );
-        }),
+    Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) {
+          return Playing(songs: songs, playingSong: song);
+        },
+      ),
     );
   }
 }
@@ -188,22 +218,22 @@ class _HomeTabPageState extends State<HomeTabPage> {
 class _SongItemSection extends StatelessWidget {
   const _SongItemSection({required this.parent, required this.song});
 
-  final _HomeTabPageState parent; // Tham chiếu đến State của HomeTabPage để gọi các hàm điều hướng.
+  final _HomeTabPageState
+  parent; // Tham chiếu đến State của HomeTabPage để gọi các hàm điều hướng.
   final Song song; // Dữ liệu của bài hát hiện tại.
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.only(
-        left: 24,
-        right: 8
-      ),
+      contentPadding: const EdgeInsets.only(left: 24, right: 8),
       // Hiển thị ảnh bìa bài hát với hiệu ứng tải ảnh mượt mà (FadeInImage).
       leading: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: FadeInImage.assetNetwork(
-          placeholder: 'assets/img.png', // Ảnh hiển thị tạm thời trong khi tải.
-          image: song.image, // Đường dẫn URL ảnh thực tế từ mạng.
+          placeholder: 'assets/img.png',
+          // Ảnh hiển thị tạm thời trong khi tải.
+          image: song.image,
+          // Đường dẫn URL ảnh thực tế từ mạng.
           width: 48,
           height: 48,
           // Hiển thị ảnh mặc định nếu xảy ra lỗi trong quá trình tải ảnh từ mạng.
@@ -212,13 +242,16 @@ class _SongItemSection extends StatelessWidget {
           },
         ),
       ),
-      title: Text(song.title), // Tiêu đề của bài hát.
-      subtitle: Text(song.artist), // Tên của nghệ sĩ biểu diễn.
+      title: Text(song.title),
+      // Tiêu đề của bài hát.
+      subtitle: Text(song.artist),
+      // Tên của nghệ sĩ biểu diễn.
       // Nút hiển thị thêm các tùy chọn (biểu tượng ba chấm ngang).
       trailing: IconButton(
-        icon: const Icon(Icons.more_horiz), 
+        icon: const Icon(Icons.more_horiz),
         onPressed: () {
-          parent.showBottomSheet(); // Gọi hàm hiển thị Bottom Sheet khi nhấn vào.
+          parent
+              .showBottomSheet(); // Gọi hàm hiển thị Bottom Sheet khi nhấn vào.
         },
       ),
       // Xử lý sự kiện khi người dùng nhấn vào toàn bộ vùng của bài hát.
