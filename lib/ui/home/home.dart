@@ -23,6 +23,7 @@ class CapyMusic extends StatelessWidget {
         useMaterial3: true, // Sử dụng Material Design 3.
       ),
       home: const MusicHomePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
