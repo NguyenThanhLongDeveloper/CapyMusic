@@ -41,12 +41,12 @@ class PlayingPage extends StatefulWidget {
 class _PlayingPageState extends State<PlayingPage> {
   @override
   Widget build(BuildContext context) {
-    // Sử dụng Scaffold theo phong cách Cupertino (iOS).
+    // Sử dụng Scaffold theo phong cách Cupertino (iOS) làm khung cho trang.
     return CupertinoPageScaffold(
-      // Thanh tiêu đề trên cùng.
+      // Thanh tiêu đề phía trên cùng.
       navigationBar: CupertinoNavigationBar(
-        middle: const Text("Đang phát "), // Tiêu đề chính giữa thanh điều hướng.
-        // Nút chức năng bên phải thanh điều hướng.
+        middle: const Text("Đang phát"), // Tiêu đề chính giữa thanh điều hướng.
+        // Nút chức năng bên phải (thường dùng cho menu thêm).
         trailing: IconButton(
           onPressed: () {
             // TODO: Xử lý khi nhấn vào nút thêm (ba chấm).
@@ -54,9 +54,20 @@ class _PlayingPageState extends State<PlayingPage> {
           icon: const Icon(Icons.more_horiz),
         ),
       ),
-      // Nội dung chính của màn hình, hiện tại đang hiển thị một văn bản ở giữa.
-      child: const Center(
-        child: Text('now playing page'),
+      // Phần nội dung chính của trang.
+      child: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Hiển thị tên album của bài hát hiện tại.
+              Text(widget.playingSong.album),
+              const SizedBox(height: 16), // Khoảng cách giữa các thành phần.
+              const Text('_ ___ _'), // Một dòng ngăn cách trang trí.
+              const SizedBox(height: 48), // Khoảng cách phía dưới.
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -95,8 +95,7 @@ class HomeTabPage extends StatefulWidget {
 }
 
 class _HomeTabPageState extends State<HomeTabPage> {
-  List<Song> songs =
-      []; // Danh sách các bài hát được lưu trữ tại đây sau khi tải về.
+  List<Song> songs = []; // Danh sách các bài hát được lưu trữ tại đây sau khi tải về.
   late CapyMusicViewModel
   _viewModel; // ViewModel quản lý việc lấy dữ liệu bài hát.
 
