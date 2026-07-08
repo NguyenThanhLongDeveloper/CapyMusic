@@ -1,7 +1,9 @@
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/model/song.dart';
+import 'audio_player_manager.dart';
 
 /// Widget bao bọc cho màn hình đang phát nhạc.
 class Playing extends StatelessWidget {
@@ -42,8 +44,8 @@ class PlayingPage extends StatefulWidget {
 /// Sử dụng SingleTickerProviderStateMixin để hỗ trợ cho AnimationController.
 class _PlayingPageState extends State<PlayingPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController
-  _imageAnimationController; // Bộ điều khiển cho hiệu ứng xoay ảnh bìa.
+  late AnimationController _imageAnimationController; // Bộ điều khiển cho hiệu ứng xoay ảnh bìa.
+  late AudioPlayerManager _audioPlayerManager; // Trình quản lý phát nhạc.
 
   @override
   void initState() {
@@ -53,10 +55,15 @@ class _PlayingPageState extends State<PlayingPage>
       vsync: this,
       duration: const Duration(milliseconds: 12000),
     );
+
+    // Khởi tạo và chuẩn bị trình quản lý âm thanh.
+    _audioPlayerManager = AudioPlayerManager(songUrl: widget.playingSong.source);
+    _audioPlayerManager.init();
   }
 
   @override
   void dispose() {
+    // Giải phóng bộ điều khiển ảnh khi widget bị hủy.
     _imageAnimationController
         .dispose(); // Hủy bộ điều khiển khi widget bị hủy để giải phóng bộ nhớ.
     super.dispose();
@@ -66,7 +73,7 @@ class _PlayingPageState extends State<PlayingPage>
   Widget build(BuildContext context) {
     // Lấy chiều rộng của màn hình thiết bị.
     final screenWidth = MediaQuery.of(context).size.width;
-    const delta = 64; // Khoảng cách lề.
+    const delta = 64; // Khoảng cách lề trái phải tổng cộng.
     final radius =
         (screenWidth - delta) /
         2; // Tính toán bán kính để ảnh bìa có hình tròn.
@@ -103,15 +110,15 @@ class _PlayingPageState extends State<PlayingPage>
                 ).animate(_imageAnimationController),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(radius),
-                  // Làm tròn ảnh bìa.
+                  // Làm tròn ảnh bìa thành hình tròn.
                   child: FadeInImage.assetNetwork(
                     placeholder: 'assets/img.png',
-                    // Ảnh hiển thị tạm thời.
+                    // Ảnh hiển thị tạm thời trong khi tải ảnh từ internet.
                     image: widget.playingSong.image,
-                    // Ảnh bìa từ URL.
+                    // URL ảnh bìa bài hát.
                     width: screenWidth - delta,
                     height: screenWidth - delta,
-                    // Xử lý khi tải ảnh từ URL gặp lỗi.
+                    // Xử lý khi không tải được ảnh từ URL.
                     imageErrorBuilder: (context, error, StackTrace) {
                       return Image.asset(
                         'assets/img.png',
@@ -162,10 +169,35 @@ class _PlayingPageState extends State<PlayingPage>
                   ),
                 ),
               ),
+
+              // Vùng hiển thị thanh tiến trình bài hát.
+              Padding(
+                padding: const EdgeInsets.only(top: 32, left: 24, right: 24, bottom: 16), 
+                child: _progressBar(),
+              )
             ],
           ),
         ),
       ),
     );
+  }
+
+  /// Xây dựng thanh tiến trình dựa trên trạng thái thời gian thực của trình phát nhạc.
+  StreamBuilder<DurationState> _progressBar() {
+    return StreamBuilder <DurationState> (
+      stream: _audioPlayerManager.durationState, // Lắng nghe luồng dữ liệu tiến trình.
+      builder: (context, snapshot) {
+        final durationState = snapshot.data;
+        final progress = durationState?.progress ?? Duration.zero;
+        final buffered = durationState?.buffered ?? Duration.zero;
+        final total = durationState?.total ?? Duration.zero;
+
+        // Widget ProgressBar hiển thị tiến trình phát, vùng đệm và tổng thời gian.
+        return ProgressBar(
+          progress: progress, 
+          total: total,
+          buffered: buffered,
+        );
+    });
   }
 }
