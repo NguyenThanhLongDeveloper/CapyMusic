@@ -30,6 +30,7 @@ class PlayingPage extends StatefulWidget {
 
   /// Đối tượng bài hát đang phát.
   final Song playingSong;
+
   /// Danh sách bài hát phục vụ cho tính năng chuyển bài.
   final List<Song> songs;
 
@@ -38,9 +39,34 @@ class PlayingPage extends StatefulWidget {
 }
 
 /// Lớp quản lý trạng thái cho PlayingPage.
-class _PlayingPageState extends State<PlayingPage> {
+/// Sử dụng SingleTickerProviderStateMixin để hỗ trợ cho AnimationController.
+class _PlayingPageState extends State<PlayingPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _imageAnimationController; // Bộ điều khiển cho hiệu ứng xoay ảnh bìa.
+
+  @override
+  void initState() {
+    super.initState();
+    // Khởi tạo AnimationController với thời gian hoàn thành một vòng xoay là 12 giây.
+    _imageAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 12000),
+    );
+  }
+
+  @override
+  void dispose() {
+    _imageAnimationController.dispose(); // Hủy bộ điều khiển khi widget bị hủy để giải phóng bộ nhớ.
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Lấy chiều rộng của màn hình thiết bị.
+    final screenWidth = MediaQuery.of(context).size.width;
+    const delta = 64; // Khoảng cách lề.
+    final radius = (screenWidth - delta) / 2; // Tính toán bán kính để ảnh bìa có hình tròn.
+
     // Sử dụng Scaffold theo phong cách Cupertino (iOS) làm khung cho trang.
     return CupertinoPageScaffold(
       // Thanh tiêu đề phía trên cùng.
@@ -65,6 +91,31 @@ class _PlayingPageState extends State<PlayingPage> {
               const SizedBox(height: 16), // Khoảng cách giữa các thành phần.
               const Text('_ ___ _'), // Một dòng ngăn cách trang trí.
               const SizedBox(height: 48), // Khoảng cách phía dưới.
+              
+              // Hiệu ứng xoay cho ảnh bìa bài hát.
+              RotationTransition(
+                turns: Tween(
+                  begin: 0.0,
+                  end: 1.0,
+                ).animate(_imageAnimationController),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(radius), // Làm tròn ảnh bìa.
+                  child: FadeInImage.assetNetwork(
+                    placeholder: 'assets/img.png', // Ảnh hiển thị tạm thời.
+                    image: widget.playingSong.image, // Ảnh bìa từ URL.
+                    width: screenWidth - delta,
+                    height: screenWidth - delta,
+                    // Xử lý khi tải ảnh từ URL gặp lỗi.
+                    imageErrorBuilder: (context, error, StackTrace) {
+                      return Image.asset(
+                        'assets/img.png', 
+                        width: screenWidth - delta,
+                        height: screenWidth - delta,
+                      );
+                    },
+                  ),
+                ),
+              ),
             ],
           ),
         ),
