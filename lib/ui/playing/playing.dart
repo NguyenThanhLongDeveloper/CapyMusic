@@ -42,7 +42,8 @@ class PlayingPage extends StatefulWidget {
 /// Sử dụng SingleTickerProviderStateMixin để hỗ trợ cho AnimationController.
 class _PlayingPageState extends State<PlayingPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _imageAnimationController; // Bộ điều khiển cho hiệu ứng xoay ảnh bìa.
+  late AnimationController
+  _imageAnimationController; // Bộ điều khiển cho hiệu ứng xoay ảnh bìa.
 
   @override
   void initState() {
@@ -56,7 +57,8 @@ class _PlayingPageState extends State<PlayingPage>
 
   @override
   void dispose() {
-    _imageAnimationController.dispose(); // Hủy bộ điều khiển khi widget bị hủy để giải phóng bộ nhớ.
+    _imageAnimationController
+        .dispose(); // Hủy bộ điều khiển khi widget bị hủy để giải phóng bộ nhớ.
     super.dispose();
   }
 
@@ -65,7 +67,9 @@ class _PlayingPageState extends State<PlayingPage>
     // Lấy chiều rộng của màn hình thiết bị.
     final screenWidth = MediaQuery.of(context).size.width;
     const delta = 64; // Khoảng cách lề.
-    final radius = (screenWidth - delta) / 2; // Tính toán bán kính để ảnh bìa có hình tròn.
+    final radius =
+        (screenWidth - delta) /
+        2; // Tính toán bán kính để ảnh bìa có hình tròn.
 
     // Sử dụng Scaffold theo phong cách Cupertino (iOS) làm khung cho trang.
     return CupertinoPageScaffold(
@@ -91,7 +95,6 @@ class _PlayingPageState extends State<PlayingPage>
               const SizedBox(height: 16), // Khoảng cách giữa các thành phần.
               const Text('_ ___ _'), // Một dòng ngăn cách trang trí.
               const SizedBox(height: 48), // Khoảng cách phía dưới.
-              
               // Hiệu ứng xoay cho ảnh bìa bài hát.
               RotationTransition(
                 turns: Tween(
@@ -99,20 +102,63 @@ class _PlayingPageState extends State<PlayingPage>
                   end: 1.0,
                 ).animate(_imageAnimationController),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(radius), // Làm tròn ảnh bìa.
+                  borderRadius: BorderRadius.circular(radius),
+                  // Làm tròn ảnh bìa.
                   child: FadeInImage.assetNetwork(
-                    placeholder: 'assets/img.png', // Ảnh hiển thị tạm thời.
-                    image: widget.playingSong.image, // Ảnh bìa từ URL.
+                    placeholder: 'assets/img.png',
+                    // Ảnh hiển thị tạm thời.
+                    image: widget.playingSong.image,
+                    // Ảnh bìa từ URL.
                     width: screenWidth - delta,
                     height: screenWidth - delta,
                     // Xử lý khi tải ảnh từ URL gặp lỗi.
                     imageErrorBuilder: (context, error, StackTrace) {
                       return Image.asset(
-                        'assets/img.png', 
+                        'assets/img.png',
                         width: screenWidth - delta,
                         height: screenWidth - delta,
                       );
                     },
+                  ),
+                ),
+              ),
+
+              // Phần hiển thị tiêu đề bài hát, nghệ sĩ và các nút tương tác (Share, Favorite).
+              Padding(
+                padding: const EdgeInsets.only(top: 64, bottom: 16),
+                child: SizedBox(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      // Nút chia sẻ bài hát.
+                      IconButton(
+                        onPressed: () {
+                          // TODO: Xử lý chia sẻ.
+                        },
+                        icon: const Icon(Icons.share_outlined),
+                      ),
+                      // Hiển thị tên bài hát và nghệ sĩ ở giữa.
+                      Column(
+                        children: [
+                          Text(
+                            widget.playingSong.title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.playingSong.artist,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                      // Nút thêm vào danh sách yêu thích.
+                      IconButton(
+                        onPressed: () {
+                          // TODO: Xử lý yêu thích.
+                        },
+                        icon: const Icon(Icons.favorite_outline),
+                      )
+                    ],
                   ),
                 ),
               ),
