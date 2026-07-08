@@ -44,7 +44,8 @@ class PlayingPage extends StatefulWidget {
 /// Sử dụng SingleTickerProviderStateMixin để hỗ trợ cho AnimationController.
 class _PlayingPageState extends State<PlayingPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _imageAnimationController; // Bộ điều khiển cho hiệu ứng xoay ảnh bìa.
+  late AnimationController
+  _imageAnimationController; // Bộ điều khiển cho hiệu ứng xoay ảnh bìa.
   late AudioPlayerManager _audioPlayerManager; // Trình quản lý phát nhạc.
 
   @override
@@ -57,7 +58,9 @@ class _PlayingPageState extends State<PlayingPage>
     );
 
     // Khởi tạo và chuẩn bị trình quản lý âm thanh.
-    _audioPlayerManager = AudioPlayerManager(songUrl: widget.playingSong.source);
+    _audioPlayerManager = AudioPlayerManager(
+      songUrl: widget.playingSong.source,
+    );
     _audioPlayerManager.init();
   }
 
@@ -99,9 +102,12 @@ class _PlayingPageState extends State<PlayingPage>
             children: [
               // Hiển thị tên album của bài hát hiện tại.
               Text(widget.playingSong.album),
-              const SizedBox(height: 16), // Khoảng cách giữa các thành phần.
-              const Text('_ ___ _'), // Một dòng ngăn cách trang trí.
-              const SizedBox(height: 48), // Khoảng cách phía dưới.
+              const SizedBox(height: 16),
+              // Khoảng cách giữa các thành phần.
+              const Text('_ ___ _'),
+              // Một dòng ngăn cách trang trí.
+              const SizedBox(height: 32),
+              // Khoảng cách phía dưới.
               // Hiệu ứng xoay cho ảnh bìa bài hát.
               RotationTransition(
                 turns: Tween(
@@ -132,7 +138,7 @@ class _PlayingPageState extends State<PlayingPage>
 
               // Phần hiển thị tiêu đề bài hát, nghệ sĩ và các nút tương tác (Share, Favorite).
               Padding(
-                padding: const EdgeInsets.only(top: 64, bottom: 16),
+                padding: const EdgeInsets.only(top: 32, bottom: 8),
                 child: SizedBox(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -164,7 +170,7 @@ class _PlayingPageState extends State<PlayingPage>
                           // TODO: Xử lý yêu thích.
                         },
                         icon: const Icon(Icons.favorite_outline),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -172,9 +178,23 @@ class _PlayingPageState extends State<PlayingPage>
 
               // Vùng hiển thị thanh tiến trình bài hát.
               Padding(
-                padding: const EdgeInsets.only(top: 32, left: 24, right: 24, bottom: 16), 
+                padding: const EdgeInsets.only(
+                  top: 8,
+                  left: 24,
+                  right: 24,
+                  bottom: 8,
+                ),
                 child: _progressBar(),
-              )
+              ),
+
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: 8,
+                  left: 24,
+                  right: 24,
+                ),
+                child: _mediaButton(),
+              ),
             ],
           ),
         ),
@@ -182,10 +202,28 @@ class _PlayingPageState extends State<PlayingPage>
     );
   }
 
+  /// Xây dựng hàng các nút điều khiển nhạc (Shuffle, Previous, Play/Pause, Next, Repeat).
+  Widget _mediaButton() {
+    return const SizedBox(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            MediaButtonControl(function: null, icon: Icons.shuffle, color: Colors.deepPurple, size: 24),
+            MediaButtonControl(function: null, icon: Icons.skip_previous, color: Colors.deepPurple, size: 36),
+            MediaButtonControl(function: null, icon: Icons.play_arrow_sharp, color: Colors.deepPurple, size: 48),
+            MediaButtonControl(function: null, icon: Icons.skip_next, color: Colors.deepPurple, size: 36),
+            MediaButtonControl(function: null, icon: Icons.repeat, color: Colors.deepPurple, size: 24),
+
+          ],
+        )
+    );
+  }
+
   /// Xây dựng thanh tiến trình dựa trên trạng thái thời gian thực của trình phát nhạc.
   StreamBuilder<DurationState> _progressBar() {
-    return StreamBuilder <DurationState> (
-      stream: _audioPlayerManager.durationState, // Lắng nghe luồng dữ liệu tiến trình.
+    return StreamBuilder<DurationState>(
+      stream: _audioPlayerManager.durationState,
+      // Lắng nghe luồng dữ liệu tiến trình.
       builder: (context, snapshot) {
         final durationState = snapshot.data;
         final progress = durationState?.progress ?? Duration.zero;
@@ -194,10 +232,47 @@ class _PlayingPageState extends State<PlayingPage>
 
         // Widget ProgressBar hiển thị tiến trình phát, vùng đệm và tổng thời gian.
         return ProgressBar(
-          progress: progress, 
+          progress: progress,
           total: total,
           buffered: buffered,
         );
-    });
+      },
+    );
+  }
+}
+
+/// Một widget tùy chỉnh để hiển thị các nút điều khiển phương tiện với icon, màu sắc và kích thước tùy biến.
+class MediaButtonControl extends StatefulWidget {
+  const MediaButtonControl({
+    super.key,
+    required this.function,
+    required this.icon,
+    required this.color,
+    required this.size,
+  });
+
+  /// Hàm xử lý sự kiện khi nút được nhấn.
+  final void Function()? function;
+  /// Biểu tượng của nút.
+  final IconData icon;
+  /// Kích thước của biểu tượng.
+  final double? size;
+  /// Màu sắc của biểu tượng.
+  final Color? color;
+
+  @override
+  State<StatefulWidget> createState() => _MediaButtonControlState();
+}
+
+/// Trạng thái của MediaButtonControl.
+class _MediaButtonControlState extends State<MediaButtonControl> {
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: widget.function,
+      icon: Icon(widget.icon),
+      iconSize: widget.size,
+      color: widget.color ?? Theme.of(context).colorScheme.primary,
+    );
   }
 }
