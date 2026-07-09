@@ -44,10 +44,10 @@ class AudioPlayerManager {
     }
   }
 
-  /// Cập nhật URL bài hát mới cho manager và thực hiện chuẩn bị lại luồng dữ liệu.
+  /// Cập nhật URL bài hát mới cho manager và thực hiện nạp lại bài hát.
   void updateSongUrl(String url) {
     songUrl = url;
-    prepare();
+    prepare(isNewSong: true); // Truyền true để AudioPlayer thực hiện setUrl nạp bài mới.
   }
 
   /// Giải phóng tài nguyên của trình phát nhạc khi không còn sử dụng để tránh rò rỉ bộ nhớ.
