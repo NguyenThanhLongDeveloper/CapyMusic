@@ -50,10 +50,12 @@ class _PlayingPageState extends State<PlayingPage>
   late AudioPlayerManager _audioPlayerManager; // Trình quản lý phát nhạc.
   late int _selectedItemIndex; // Chỉ số của bài hát hiện tại trong danh sách.
   late Song _song; // Đối tượng bài hát hiện tại đang được hiển thị.
+  late double _currentAnimationPosition;
 
   @override
   void initState() {
     super.initState();
+    _currentAnimationPosition = 0.0;
     _song = widget.playingSong;
     // Khởi tạo AnimationController với thời gian hoàn thành một vòng xoay là 12 giây.
     _imageAnimationController = AnimationController(
@@ -77,6 +79,7 @@ class _PlayingPageState extends State<PlayingPage>
     _imageAnimationController.dispose();
     // Huỷ trình quản lý âm thanh để giải phóng tài nguyên.
     _audioPlayerManager.dispose();
+    _imageAnimationController.dispose();
     super.dispose();
   }
 
@@ -268,6 +271,7 @@ class _PlayingPageState extends State<PlayingPage>
 
         // Nếu đang tải hoặc đang đệm nhạc, hiển thị vòng xoay tiến trình.
         if (processingState == ProcessingState.loading || processingState == ProcessingState.buffering) {
+          _pauseRotationAnim();
           return Container(
             margin: const EdgeInsets.all(8),
             width: 48,
@@ -288,9 +292,11 @@ class _PlayingPageState extends State<PlayingPage>
         } 
         // Nếu đang phát và chưa hoàn thành, hiển thị nút Pause.
         else if (processingState != ProcessingState.completed) {
+          _playRotationAnim();
           return MediaButtonControl(
             function: () {
               _audioPlayerManager.player.pause(); // Gọi lệnh tạm dừng.
+              _pauseRotationAnim();
             }, 
             icon: Icons.pause, 
             color: null, 
@@ -299,9 +305,15 @@ class _PlayingPageState extends State<PlayingPage>
         } 
         // Nếu đã hoàn thành bài hát, hiển thị nút Replay để phát lại từ đầu.
         else {
+          if (processingState == ProcessingState.completed) {
+            _stopRotationAnim();
+            _resetRotationAnim();
+          }
           return MediaButtonControl(
             function: () {
               _audioPlayerManager.player.seek(Duration.zero); // Quay về thời điểm bắt đầu.
+              _resetRotationAnim();
+              _playRotationAnim();
             }, 
             icon: Icons.replay, 
             color: null, 
@@ -318,6 +330,7 @@ class _PlayingPageState extends State<PlayingPage>
       ++_selectedItemIndex;
       final nextSong = widget.songs[_selectedItemIndex];
       _audioPlayerManager.updateSongUrl(nextSong.source);
+      _resetRotationAnim();
       setState(() {
         _song = nextSong;
       });
@@ -330,10 +343,34 @@ class _PlayingPageState extends State<PlayingPage>
       --_selectedItemIndex;
       final previousSong = widget.songs[_selectedItemIndex];
       _audioPlayerManager.updateSongUrl(previousSong.source);
+      _resetRotationAnim();
       setState(() {
         _song = previousSong;
       });
     }
+  }
+
+  /// Bắt đầu hoặc tiếp tục hiệu ứng xoay ảnh bìa.
+  void _playRotationAnim() {
+    _imageAnimationController.forward(from: _currentAnimationPosition);
+    _imageAnimationController.repeat();
+  }
+
+  /// Tạm dừng hiệu ứng xoay ảnh bìa và lưu lại vị trí hiện tại.
+  void _pauseRotationAnim() {
+    _stopRotationAnim();
+    _currentAnimationPosition = _imageAnimationController.value;
+  }
+
+  /// Dừng hoàn toàn hiệu ứng xoay.
+  void _stopRotationAnim() {
+    _imageAnimationController.stop();
+  }
+
+  /// Đưa hiệu ứng xoay về vị trí ban đầu (0.0).
+  void _resetRotationAnim() {
+    _currentAnimationPosition = 0.0;
+    _imageAnimationController.value = _currentAnimationPosition;
   }
 }
 
