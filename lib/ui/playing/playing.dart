@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -50,13 +52,15 @@ class _PlayingPageState extends State<PlayingPage>
   late AudioPlayerManager _audioPlayerManager; // Trình quản lý phát nhạc.
   late int _selectedItemIndex; // Chỉ số của bài hát hiện tại trong danh sách.
   late Song _song; // Đối tượng bài hát hiện tại đang được hiển thị.
-  late double _currentAnimationPosition;
+  late double _currentAnimationPosition; // Lưu trữ vị trí hoạt ảnh hiện tại khi tạm dừng.
+  late bool _isShuffle = false; // Trạng thái phát ngẫu nhiên.
 
   @override
   void initState() {
     super.initState();
     _currentAnimationPosition = 0.0;
     _song = widget.playingSong;
+    
     // Khởi tạo AnimationController với thời gian hoàn thành một vòng xoay là 12 giây.
     _imageAnimationController = AnimationController(
       vsync: this,
@@ -79,7 +83,6 @@ class _PlayingPageState extends State<PlayingPage>
     _imageAnimationController.dispose();
     // Huỷ trình quản lý âm thanh để giải phóng tài nguyên.
     _audioPlayerManager.dispose();
-    _imageAnimationController.dispose();
     super.dispose();
   }
 
@@ -220,10 +223,14 @@ class _PlayingPageState extends State<PlayingPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            MediaButtonControl(function: null, icon: Icons.shuffle, color: Colors.deepPurple, size: 24),
+            // Nút bật/tắt chế độ phát ngẫu nhiên.
+            MediaButtonControl(function: _setShuffle, icon: Icons.shuffle, color: _getShuffleColor(), size: 24),
+            // Nút quay lại bài hát trước đó.
             MediaButtonControl(function: _setPreviousSong, icon: Icons.skip_previous, color: Colors.deepPurple, size: 36),
             _playButton(), // Nút Phát/Tạm dừng nhạc.
+            // Nút chuyển sang bài hát tiếp theo.
             MediaButtonControl(function: _setNextSong, icon: Icons.skip_next, color: Colors.deepPurple, size: 36),
+            // Nút bật/tắt chế độ lặp lại bài hát (Hiện tại chưa cài đặt logic).
             MediaButtonControl(function: null, icon: Icons.repeat, color: Colors.deepPurple, size: 24),
 
           ],
@@ -271,7 +278,7 @@ class _PlayingPageState extends State<PlayingPage>
 
         // Nếu đang tải hoặc đang đệm nhạc, hiển thị vòng xoay tiến trình.
         if (processingState == ProcessingState.loading || processingState == ProcessingState.buffering) {
-          _pauseRotationAnim();
+          _pauseRotationAnim(); // Tạm dừng xoay ảnh bìa khi đang tải.
           return Container(
             margin: const EdgeInsets.all(8),
             width: 48,
@@ -292,11 +299,11 @@ class _PlayingPageState extends State<PlayingPage>
         } 
         // Nếu đang phát và chưa hoàn thành, hiển thị nút Pause.
         else if (processingState != ProcessingState.completed) {
-          _playRotationAnim();
+          _playRotationAnim(); // Bắt đầu xoay ảnh bìa khi đang phát.
           return MediaButtonControl(
             function: () {
               _audioPlayerManager.player.pause(); // Gọi lệnh tạm dừng.
-              _pauseRotationAnim();
+              _pauseRotationAnim(); // Tạm dừng xoay ảnh bìa.
             }, 
             icon: Icons.pause, 
             color: null, 
@@ -324,30 +331,62 @@ class _PlayingPageState extends State<PlayingPage>
     );
   }
 
+  /// Thay đổi trạng thái phát ngẫu nhiên.
+  void _setShuffle() {
+    setState(() {
+      _isShuffle = !_isShuffle;
+    });
+  }
+
+  /// Trả về màu sắc cho nút Shuffle dựa trên trạng thái bật/tắt.
+  Color? _getShuffleColor() {
+    return _isShuffle ? Colors.deepPurple : Colors.grey;
+  }
+
   /// Chuyển sang bài hát tiếp theo trong danh sách.
   void _setNextSong() {
-    if (_selectedItemIndex < widget.songs.length - 1) {
+    if (_isShuffle) {
+      // Chọn ngẫu nhiên một bài hát.
+      var random = Random();
+      _selectedItemIndex = random.nextInt(widget.songs.length);
+    } else {
+      // Chuyển sang bài tiếp theo theo thứ tự.
       ++_selectedItemIndex;
-      final nextSong = widget.songs[_selectedItemIndex];
-      _audioPlayerManager.updateSongUrl(nextSong.source);
-      _resetRotationAnim();
-      setState(() {
-        _song = nextSong;
-      });
     }
+
+    // Quay vòng về bài đầu tiên nếu vượt quá danh sách.
+    if (_selectedItemIndex >= widget.songs.length) {
+      _selectedItemIndex = _selectedItemIndex % widget.songs.length;
+    }
+    final nextSong = widget.songs[_selectedItemIndex];
+    _audioPlayerManager.updateSongUrl(nextSong.source); // Cập nhật URL bài hát mới.
+    _resetRotationAnim(); // Đặt lại hoạt ảnh xoay ảnh bìa.
+    setState(() {
+      _song = nextSong; // Cập nhật bài hát hiện tại.
+    });
   }
 
   /// Quay lại bài hát trước đó trong danh sách.
   void _setPreviousSong() {
-    if (_selectedItemIndex > 0) {
+    if (_isShuffle) {
+      // Chọn ngẫu nhiên một bài hát.
+      var random = Random();
+      _selectedItemIndex = random.nextInt(widget.songs.length);
+    } else {
+      // Quay lại bài trước đó.
       --_selectedItemIndex;
-      final previousSong = widget.songs[_selectedItemIndex];
-      _audioPlayerManager.updateSongUrl(previousSong.source);
-      _resetRotationAnim();
-      setState(() {
-        _song = previousSong;
-      });
     }
+
+    // Quay vòng về bài cuối cùng nếu nhỏ hơn 0.
+    if (_selectedItemIndex < 0) {
+      _selectedItemIndex = (-1 * _selectedItemIndex) % widget.songs.length;
+    }
+    final previousSong = widget.songs[_selectedItemIndex];
+    _audioPlayerManager.updateSongUrl(previousSong.source); // Cập nhật URL bài hát mới.
+    _resetRotationAnim(); // Đặt lại hoạt ảnh xoay ảnh bìa.
+    setState(() {
+      _song = previousSong; // Cập nhật bài hát hiện tại.
+    });
   }
 
   /// Bắt đầu hoặc tiếp tục hiệu ứng xoay ảnh bìa.
