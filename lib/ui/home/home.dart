@@ -1,5 +1,6 @@
 import 'package:capy_music/ui/discovery/discovery.dart';
 import 'package:capy_music/ui/home/viewmodel.dart';
+import 'package:capy_music/ui/playing/audio_player_manager.dart';
 import 'package:capy_music/ui/settings/settings.dart';
 import 'package:capy_music/ui/user/user.dart';
 import 'package:flutter/cupertino.dart';
@@ -111,6 +112,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
   void dispose() {
     _viewModel.songStream
         .close(); // Đảm bảo đóng StreamController khi widget bị hủy để tránh rò rỉ bộ nhớ.
+    AudioPlayerManager().dispose();
     super.dispose();
   }
 
