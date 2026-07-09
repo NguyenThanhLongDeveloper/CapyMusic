@@ -1,6 +1,7 @@
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
 import '../../data/model/song.dart';
 import 'audio_player_manager.dart';
@@ -204,13 +205,13 @@ class _PlayingPageState extends State<PlayingPage>
 
   /// Xây dựng hàng các nút điều khiển nhạc (Shuffle, Previous, Play/Pause, Next, Repeat).
   Widget _mediaButton() {
-    return const SizedBox(
+    return SizedBox(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             MediaButtonControl(function: null, icon: Icons.shuffle, color: Colors.deepPurple, size: 24),
             MediaButtonControl(function: null, icon: Icons.skip_previous, color: Colors.deepPurple, size: 36),
-            MediaButtonControl(function: null, icon: Icons.play_arrow_sharp, color: Colors.deepPurple, size: 48),
+            _playButton(), // Nút Phát/Tạm dừng nhạc.
             MediaButtonControl(function: null, icon: Icons.skip_next, color: Colors.deepPurple, size: 36),
             MediaButtonControl(function: null, icon: Icons.repeat, color: Colors.deepPurple, size: 24),
 
@@ -237,6 +238,61 @@ class _PlayingPageState extends State<PlayingPage>
           buffered: buffered,
         );
       },
+    );
+  }
+
+  /// Xây dựng nút điều khiển Phát/Tạm dừng dựa trên trạng thái hiện tại của trình phát nhạc.
+  StreamBuilder<PlayerState> _playButton() {
+    return StreamBuilder(
+      stream: _audioPlayerManager.player.playerStateStream, // Lắng nghe luồng trạng thái trình phát.
+      builder: (context, snapshot) {
+        final playState = snapshot.data;
+        final processingState = playState?.processingState; // Trạng thái xử lý (loading, buffering, ready, completed).
+        final playing = playState?.playing; // Có đang phát hay không.
+
+        // Nếu đang tải hoặc đang đệm nhạc, hiển thị vòng xoay tiến trình.
+        if (processingState == ProcessingState.loading || processingState == ProcessingState.buffering) {
+          return Container(
+            margin: const EdgeInsets.all(8),
+            width: 48,
+            height: 48,
+            child: const CircularProgressIndicator(),
+          );
+        } 
+        // Nếu không đang phát nhạc, hiển thị nút Play.
+        else if (playing != true) {
+          return MediaButtonControl(
+            function: () {
+              _audioPlayerManager.player.play(); // Gọi lệnh phát nhạc.
+            }, 
+            icon: Icons.play_arrow, 
+            color: null, 
+            size: 48
+          );
+        } 
+        // Nếu đang phát và chưa hoàn thành, hiển thị nút Pause.
+        else if (processingState != ProcessingState.completed) {
+          return MediaButtonControl(
+            function: () {
+              _audioPlayerManager.player.pause(); // Gọi lệnh tạm dừng.
+            }, 
+            icon: Icons.pause, 
+            color: null, 
+            size: 48
+          );
+        } 
+        // Nếu đã hoàn thành bài hát, hiển thị nút Replay để phát lại từ đầu.
+        else {
+          return MediaButtonControl(
+            function: () {
+              _audioPlayerManager.player.seek(Duration.zero); // Quay về thời điểm bắt đầu.
+            }, 
+            icon: Icons.replay, 
+            color: null, 
+            size: 48
+          );
+        }
+      }
     );
   }
 }
