@@ -30,6 +30,10 @@ class AudioPlayerManager {
     // Thiết lập URL cho trình phát để bắt đầu tải nhạc.
     player.setUrl(songUrl);
   }
+
+  void dispose() {
+    player.dispose();
+  }
 }
 
 /// Lớp chứa thông tin về tiến trình phát, vùng đệm và tổng thời gian của bài hát.

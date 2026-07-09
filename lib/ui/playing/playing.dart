@@ -68,8 +68,8 @@ class _PlayingPageState extends State<PlayingPage>
   @override
   void dispose() {
     // Giải phóng bộ điều khiển ảnh khi widget bị hủy.
-    _imageAnimationController
-        .dispose(); // Hủy bộ điều khiển khi widget bị hủy để giải phóng bộ nhớ.
+    _imageAnimationController.dispose(); // Hủy bộ điều khiển khi widget bị hủy để giải phóng bộ nhớ.
+    _audioPlayerManager.dispose(); // Huỷ bài hát đang phát khi widget bị huỷ
     super.dispose();
   }
 
@@ -202,6 +202,8 @@ class _PlayingPageState extends State<PlayingPage>
       ),
     );
   }
+
+
 
   /// Xây dựng hàng các nút điều khiển nhạc (Shuffle, Previous, Play/Pause, Next, Repeat).
   Widget _mediaButton() {
