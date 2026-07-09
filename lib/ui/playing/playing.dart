@@ -48,10 +48,13 @@ class _PlayingPageState extends State<PlayingPage>
   late AnimationController
   _imageAnimationController; // Bộ điều khiển cho hiệu ứng xoay ảnh bìa.
   late AudioPlayerManager _audioPlayerManager; // Trình quản lý phát nhạc.
+  late int _selectedItemIndex; // Chỉ số của bài hát hiện tại trong danh sách.
+  late Song _song; // Đối tượng bài hát hiện tại đang được hiển thị.
 
   @override
   void initState() {
     super.initState();
+    _song = widget.playingSong;
     // Khởi tạo AnimationController với thời gian hoàn thành một vòng xoay là 12 giây.
     _imageAnimationController = AnimationController(
       vsync: this,
@@ -60,16 +63,20 @@ class _PlayingPageState extends State<PlayingPage>
 
     // Khởi tạo và chuẩn bị trình quản lý âm thanh.
     _audioPlayerManager = AudioPlayerManager(
-      songUrl: widget.playingSong.source,
+      songUrl: _song.source,
     );
     _audioPlayerManager.init();
+    
+    // Lưu lại vị trí của bài hát hiện tại trong danh sách bài hát.
+    _selectedItemIndex = widget.songs.indexOf(widget.playingSong);
   }
 
   @override
   void dispose() {
     // Giải phóng bộ điều khiển ảnh khi widget bị hủy.
-    _imageAnimationController.dispose(); // Hủy bộ điều khiển khi widget bị hủy để giải phóng bộ nhớ.
-    _audioPlayerManager.dispose(); // Huỷ bài hát đang phát khi widget bị huỷ
+    _imageAnimationController.dispose();
+    // Huỷ trình quản lý âm thanh để giải phóng tài nguyên.
+    _audioPlayerManager.dispose();
     super.dispose();
   }
 
@@ -102,7 +109,7 @@ class _PlayingPageState extends State<PlayingPage>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Hiển thị tên album của bài hát hiện tại.
-              Text(widget.playingSong.album),
+              Text(_song.album),
               const SizedBox(height: 16),
               // Khoảng cách giữa các thành phần.
               const Text('_ ___ _'),
@@ -121,7 +128,7 @@ class _PlayingPageState extends State<PlayingPage>
                   child: FadeInImage.assetNetwork(
                     placeholder: 'assets/img.png',
                     // Ảnh hiển thị tạm thời trong khi tải ảnh từ internet.
-                    image: widget.playingSong.image,
+                    image: _song.image,
                     // URL ảnh bìa bài hát.
                     width: screenWidth - delta,
                     height: screenWidth - delta,
@@ -155,12 +162,12 @@ class _PlayingPageState extends State<PlayingPage>
                       Column(
                         children: [
                           Text(
-                            widget.playingSong.title,
+                            _song.title,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            widget.playingSong.artist,
+                            _song.artist,
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ],
@@ -188,6 +195,7 @@ class _PlayingPageState extends State<PlayingPage>
                 child: _progressBar(),
               ),
 
+              // Vùng hiển thị các nút điều khiển nhạc.
               Padding(
                 padding: const EdgeInsets.only(
                   top: 8,
@@ -203,8 +211,6 @@ class _PlayingPageState extends State<PlayingPage>
     );
   }
 
-
-
   /// Xây dựng hàng các nút điều khiển nhạc (Shuffle, Previous, Play/Pause, Next, Repeat).
   Widget _mediaButton() {
     return SizedBox(
@@ -212,9 +218,9 @@ class _PlayingPageState extends State<PlayingPage>
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             MediaButtonControl(function: null, icon: Icons.shuffle, color: Colors.deepPurple, size: 24),
-            MediaButtonControl(function: null, icon: Icons.skip_previous, color: Colors.deepPurple, size: 36),
+            MediaButtonControl(function: _setPreviousSong, icon: Icons.skip_previous, color: Colors.deepPurple, size: 36),
             _playButton(), // Nút Phát/Tạm dừng nhạc.
-            MediaButtonControl(function: null, icon: Icons.skip_next, color: Colors.deepPurple, size: 36),
+            MediaButtonControl(function: _setNextSong, icon: Icons.skip_next, color: Colors.deepPurple, size: 36),
             MediaButtonControl(function: null, icon: Icons.repeat, color: Colors.deepPurple, size: 24),
 
           ],
@@ -238,7 +244,7 @@ class _PlayingPageState extends State<PlayingPage>
           progress: progress,
           total: total,
           buffered: buffered,
-          onSeek: _audioPlayerManager.player.seek, //
+          onSeek: _audioPlayerManager.player.seek, // Xử lý khi người dùng tua nhạc.
           barHeight: 5.0,
           barCapShape: BarCapShape.round,
           baseBarColor: Colors.grey.withOpacity(0.3),
@@ -304,6 +310,30 @@ class _PlayingPageState extends State<PlayingPage>
         }
       }
     );
+  }
+
+  /// Chuyển sang bài hát tiếp theo trong danh sách.
+  void _setNextSong() {
+    if (_selectedItemIndex < widget.songs.length - 1) {
+      ++_selectedItemIndex;
+      final nextSong = widget.songs[_selectedItemIndex];
+      _audioPlayerManager.updateSongUrl(nextSong.source);
+      setState(() {
+        _song = nextSong;
+      });
+    }
+  }
+
+  /// Quay lại bài hát trước đó trong danh sách.
+  void _setPreviousSong() {
+    if (_selectedItemIndex > 0) {
+      --_selectedItemIndex;
+      final previousSong = widget.songs[_selectedItemIndex];
+      _audioPlayerManager.updateSongUrl(previousSong.source);
+      setState(() {
+        _song = previousSong;
+      });
+    }
   }
 }
 

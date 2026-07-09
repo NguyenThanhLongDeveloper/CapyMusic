@@ -9,7 +9,7 @@ class AudioPlayerManager {
   /// Đối tượng AudioPlayer để điều khiển việc phát nhạc.
   final player = AudioPlayer();
   
-  /// Stream cung cấp thông tin về trạng thái thời gian của bài hát.
+  /// Stream cung cấp thông tin về trạng thái thời gian của bài hát (vị trí, đệm, tổng thời gian).
   Stream<DurationState>? durationState;
   
   /// URL của bài hát hiện tại.
@@ -21,16 +21,23 @@ class AudioPlayerManager {
     durationState = Rx.combineLatest2<Duration, PlaybackEvent, DurationState>(
       player.positionStream,
       player.playbackEventStream,
-      (position, PlaybackEvent) => DurationState(
+      (position, playbackEvent) => DurationState(
         progress: position,
-        buffered: PlaybackEvent.bufferedPosition,
-        total: PlaybackEvent.duration,
+        buffered: playbackEvent.bufferedPosition,
+        total: playbackEvent.duration,
       ),
     );
     // Thiết lập URL cho trình phát để bắt đầu tải nhạc.
     player.setUrl(songUrl);
   }
 
+  /// Cập nhật URL mới cho bài hát và khởi tạo lại trình phát.
+  void updateSongUrl(String url) {
+    songUrl = url;
+    init();
+  }
+
+  /// Giải phóng tài nguyên của trình phát nhạc khi không còn sử dụng.
   void dispose() {
     player.dispose();
   }
