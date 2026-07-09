@@ -238,6 +238,14 @@ class _PlayingPageState extends State<PlayingPage>
           progress: progress,
           total: total,
           buffered: buffered,
+          onSeek: _audioPlayerManager.player.seek, //
+          barHeight: 5.0,
+          barCapShape: BarCapShape.round,
+          baseBarColor: Colors.grey.withOpacity(0.3),
+          progressBarColor: Colors.green,
+          bufferedBarColor:   Colors.grey.withOpacity(0.3),
+          thumbGlowColor: Colors.black,
+          thumbRadius: 10.0,
         );
       },
     );
